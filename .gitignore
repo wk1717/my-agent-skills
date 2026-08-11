@@ -1,0 +1,3 @@
+# Ignore local private skills directory
+PTC/
+.DS_Store
