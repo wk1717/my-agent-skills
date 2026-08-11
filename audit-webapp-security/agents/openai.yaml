@@ -1,0 +1,4 @@
+interface:
+  display_name: "웹서비스 보안 감사"
+  short_description: "웹·API·인증·권한·DB·운영을 다각도로 보안 검증"
+  default_prompt: "Use $audit-webapp-security to perform an evidence-backed security review of this web service codebase."
