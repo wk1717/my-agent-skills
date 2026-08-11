@@ -46,12 +46,21 @@ ln -s ~/projects/my-agent-skills/skill-creator ~/.claude/skills/
 
 ---
 
-## 💡 사용 방법
+## 💡 사용 방법 (3가지 호출 방식)
 
-에이전트(Claude Code / AGY)와 대화 시 자연어로 요청합니다:
+### 1️⃣ 슬래시 명령어 / 스킬명 직접 지정 (추천 ⚡)
+AI 대화창에 슬래시(`/`) 또는 스킬 이름을 직접 지정하면 AI가 해당 스킬 지침을 100% 우선 로드합니다:
+- `/github-ops` 또는 `github-ops 스킬로 PR 올려줘`
+- `/audit-webapp-security` 또는 `audit-webapp-security 스킬 실행해줘`
+- `/frontend-design` 또는 `frontend-design 지침 적용해줘`
 
-- *"웹 보안 점검 수행해줘"* -> `audit-webapp-security` 실행
-- *"PR 올려줘 / 커밋해줘"* -> `github-ops` 실행
-- *"UI 디자인 개선해줘"* -> `frontend-design` 실행
-- *"React 스킬 검색해줘"* -> `find-skills` 실행
-- *"새 스킬 만들어줘"* -> `skill-creator` 실행
+### 2️⃣ 자연어 유도 방식 (Natural Language Trigger)
+스킬 이름을 몰라도 관련 대화를 건네면 에이전트가 `SKILL.md` 헤더의 `description` 키워드를 인식하여 자동 발동합니다:
+- *"웹 보안 점검 수행해줘"* -> `audit-webapp-security` 자동 트리거
+- *"이슈 12번 커밋하고 PR 올려줘"* -> `github-ops` 자동 트리거
+- *"React 스킬 검색해줘"* -> `find-skills` 자동 트리거
+
+### 3️⃣ 터미널 쉘 커맨드 직접 실행
+스킬 내부에서 사용하는 CLI 도구(예: `npx skills`, `gh`)는 터미널 쉘에 직접 입력하여 사용할 수도 있습니다:
+- `npx skills find <키워드>` : 스킬 생태계 직접 검색
+- `gh pr create` : GitHub PR 직접 생성
