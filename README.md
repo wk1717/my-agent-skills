@@ -8,16 +8,16 @@ Standard Agent Skills 스펙(`SKILL.md` + YAML 헤더)을 준수하며, 심볼�
 
 ## 🛠️ 포함된 스킬 목록
 
-1. 🛡️ **`audit-webapp-security`**
+1. **`audit-webapp-security`**
    - **설명**: 웹서비스 코드베이스 증거 기반 다각도 보안 감사 스킬 (인증/세션, API, DB, 비밀정보, XSS, 업로드 등 점검)
    - **포함 자료**: 세부 체크리스트(`references/review-checklist.md`), 보고서 양식(`references/report-format.md`)
-2. 🐙 **`github-ops`**
+2. **`github-ops`**
    - **설명**: Git & GitHub CLI(`gh`) 기반 자동 커밋, 푸시, PR 생성 워크플로우
-3. 🎨 **`frontend-design`**
+3. **`frontend-design`**
    - **설명**: 고품질 프론트엔드 UI 디자인 및 컴포넌트 생성 가이드
-4. 🔍 **`find-skills`**
+4. **`find-skills`**
    - **설명**: 에이전트 스킬 생태계(`npx skills`) 탐색 도구
-5. 📝 **`skill-creator`**
+5. **`skill-creator`**
    - **설명**: 새로운 `SKILL.md` 스킬 작성 및 검증 메타 도구
 
 ---
