@@ -1,0 +1,20 @@
+{
+  "skill_name": "insights",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/insights",
+      "expected_output": "Generates and opens the HTML session insights report and displays key summary metrics."
+    },
+    {
+      "id": 2,
+      "prompt": "최근 대화 기록이랑 세션 로그 바탕으로 세션 인사이트 보고서 만들어줘",
+      "expected_output": "Executes generate_insights.py and displays the summary with report path."
+    },
+    {
+      "id": 3,
+      "prompt": "지난 7일간의 에이전트 세션 활동 분석 보고서 열어줘",
+      "expected_output": "Executes generate_insights.py with --days 7 flag and presents the report."
+    }
+  ]
+}
