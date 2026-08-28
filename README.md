@@ -6,7 +6,7 @@ Standard Agent Skills 스펙(`SKILL.md` + YAML 헤더)을 준수하며, 심볼�
 
 ---
 
-## 🛠️ 포함된 스킬 목록
+## 🛠️ Skills
 
 1. **`audit-webapp-security`**
    - **설명**: 웹서비스 코드베이스 증거 기반 다각도 보안 감사 스킬 (인증/세션, API, DB, 비밀정보, XSS, 업로드 등 점검)
@@ -28,7 +28,7 @@ Standard Agent Skills 스펙(`SKILL.md` + YAML 헤더)을 준수하며, 심볼�
 
 ---
 
-## 📟 스킬이 아닌 도구
+## ⚙️ 스킬이 아닌 도구
 
 - **`statusline`**
   - **설명**: 입력창 위에 한 줄 상태바 표시 — 🤖 모델 / 🧠 Effort / 📊 컨텍스트 사용률 / 💳 `/usage` 레이트리밋(5시간 · 7일, 초기화 절대 시각)
