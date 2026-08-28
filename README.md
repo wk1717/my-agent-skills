@@ -28,6 +28,16 @@ Standard Agent Skills 스펙(`SKILL.md` + YAML 헤더)을 준수하며, 심볼�
 
 ---
 
+## 📟 스킬이 아닌 도구
+
+- **`statusline`**
+  - **설명**: 입력창 위에 한 줄 상태바 표시 — 🤖 모델 / 🧠 Effort / 📊 컨텍스트 사용률 / 💳 `/usage` 레이트리밋(5시간 · 7일, 초기화 절대 시각)
+  - **대상**: Claude Code + AGY 양쪽 버전 포함
+  - **설치**: `cd statusline && ./install.sh` — 각 `settings.json`의 `statusLine` 키만 병합하고 나머지 설정은 보존합니다
+  - 한 번 설치하면 끝나는 설정물이라 `SKILL.md`가 없고, 심볼릭 링크도 필요 없습니다. 자세한 내용은 [`statusline/README.md`](statusline/README.md)
+
+---
+
 ## 🔗 연동 및 동기화 설정 (Symlinks)
 
 ### 1. Antigravity (AGY / Gemini CLI)
