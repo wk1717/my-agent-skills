@@ -69,13 +69,36 @@
 
 ---
 
+## 새 세션에서의 초기 표시
+
+Claude Code는 **첫 API 응답이 오기 전까지 stdin 페이로드에 `context_window`도 `rate_limits`도 넣어주지 않습니다.** 그래서 이전 세션에서 값을 받았든 말든, 새 창에서 세션을 열면 상태바가 이렇게 뜹니다:
+
+```
+🤖 Opus 5 │ 🧠 medium │ 📊 --% │ 💳 $0.000
+```
+
+Claude 버전도 AGY처럼 마지막 값을 캐시해서 이 구간을 메웁니다 — `~/.claude/cache/statusline-state.json`:
+
+```json
+{"context_limit": 1000000, "rate_limits": [["5h", 24, "..."], ["7d", 18, "..."]]}
+```
+
+- **💳** — 레이트리밋은 세션이 아니라 **계정 전역** 값이라, 캐시된 창은 추측이 아니라 진짜 현재 수치입니다. `resets_at`이 지난 창은 리셋된 것이므로 `0%`로 표시하고 `↻` 시각은 뗍니다.
+- **📊** — 새 세션에선 아직 아무것도 안 보냈으니 `0%`가 사실입니다. 창 크기(1M / 200k)만 캐시에서 가져옵니다. 캐시가 아직 없는 최초 1회만 `📊 0% (0/200k)`로 뜨고, 응답을 한 번 받으면 이후로는 정확합니다.
+
+값이 바뀌었을 때만 쓰고, 임시 파일에 쓴 뒤 `os.replace()`로 원자적 교체하므로 여러 세션을 동시에 띄워도 안전합니다. 캐시 읽기/쓰기 실패는 전부 삼키고 예전처럼 `--%`로 표시합니다.
+
+캐시를 비우려면 그냥 파일을 지우면 됩니다 — 다음 갱신 때 다시 채워집니다.
+
+---
+
 ## 갱신 방식 (두 에이전트가 다릅니다)
 
 | | Claude Code | AGY |
 |---|---|---|
 | 방식 | 타이머 폴링 | 이벤트 (`triggerStatusLineUpdate`) |
 | `refreshInterval` | ✅ `30`초로 설정됨 | ❌ **지원 안 함** (`type`/`command`/`padding`/`stack_with_default`만 인식) |
-| 사용량 데이터 | stdin 페이로드의 `rate_limits` | `agy -p /usage` 결과를 자체 캐시 |
+| 사용량 데이터 | stdin 페이로드의 `rate_limits` (없으면 자체 캐시) | `agy -p /usage` 결과를 자체 캐시 |
 
 AGY는 `refreshInterval`이 없어서 스크립트가 직접 캐시를 관리합니다:
 
@@ -96,6 +119,8 @@ FETCH_TIMEOUT = 20    # `agy -p /usage`는 실측 ~5초
 | `NO_COLOR` | 색상 비활성화 |
 | `STATUSLINE_DEBUG=1` | stdin 페이로드를 `/tmp/statusline-payload.json`에 덤프 |
 | `STATUSLINE_CONTEXT_LIMIT` | 페이로드에 컨텍스트 한도가 없을 때 쓸 기본값 (기본 `200000`) |
+
+> 캐시에 창 크기가 남아 있으면 그쪽을 먼저 씁니다. `STATUSLINE_CONTEXT_LIMIT`은 캐시도 없을 때의 최종 폴백입니다.
 
 ---
 

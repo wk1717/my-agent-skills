@@ -46,28 +46,47 @@ def settings_effort():
     return None
 
 def transcript_tokens(path):
-    """Fallback context size: newest assistant usage record."""
+    """Fallback context size: newest assistant usage record.
+
+    Read backwards from the end in growing chunks rather than slurping the file.
+    Transcripts reach tens of MB in a long session, and this runs on every
+    status line redraw - including a timer tick every refreshInterval seconds.
+    The record we want is almost always in the last few KB.
+    """
     if not path or not os.path.exists(path):
         return None
     try:
+        size = os.path.getsize(path)
         with open(path, "rb") as f:
-            lines = f.readlines()
+            for chunk in (64 * 1024, 1024 * 1024, size):
+                if chunk <= 0:
+                    break
+                read = min(chunk, size)
+                f.seek(size - read)
+                buf = f.read(read)
+                lines = buf.split(b"\n")
+                if read < size:
+                    lines = lines[1:]   # first line is cut mid-record
+                for raw in reversed(lines):
+                    if not raw.strip():
+                        continue
+                    try:
+                        rec = json.loads(raw)
+                    except Exception:
+                        continue
+                    if not isinstance(rec, dict) or rec.get("isSidechain"):
+                        continue
+                    u = dig(rec, "message", "usage")
+                    if not isinstance(u, dict):
+                        continue
+                    total = (u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+                             + u.get("cache_read_input_tokens", 0) + u.get("output_tokens", 0))
+                    if total:
+                        return total
+                if read >= size:
+                    break
     except Exception:
         return None
-    for raw in reversed(lines):
-        try:
-            rec = json.loads(raw)
-        except Exception:
-            continue
-        if rec.get("isSidechain"):
-            continue
-        u = dig(rec, "message", "usage")
-        if not isinstance(u, dict):
-            continue
-        total = (u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
-                 + u.get("cache_read_input_tokens", 0) + u.get("output_tokens", 0))
-        if total:
-            return total
     return None
 
 def first_num(d, *keys):
@@ -142,6 +161,74 @@ def reset_clock(ts):
         return t.strftime("%H:%M")
     return f"{t.month}/{t.day} {t:%H:%M}"
 
+CACHE = os.path.join(HOME, ".claude", "cache", "statusline-state.json")
+
+def load_cache():
+    try:
+        with open(CACHE) as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+def save_cache(**kw):
+    """Remember the last values Claude actually reported.
+
+    A fresh session gets no context_window and no rate_limits until the first
+    API response lands, so without this the line reads "--% / $0.000" for the
+    whole first turn. Rate limits are account-wide, so a cached window is the
+    real current figure, not a guess.
+    """
+    kw = {k: v for k, v in kw.items() if v is not None}
+    if not kw:
+        return
+    d = load_cache()
+    if all(d.get(k) == v for k, v in kw.items()):
+        return
+    d.update(kw)
+    try:
+        os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+        tmp = CACHE + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(d, f)
+        os.replace(tmp, CACHE)
+    except Exception:
+        pass
+
+def expired(ts):
+    """True once a window's reset time has passed - its usage is back to 0%."""
+    if not ts:
+        return False
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if isinstance(ts, (int, float)):
+        try:
+            t = datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
+        except Exception:
+            return False
+    elif isinstance(ts, str):
+        try:
+            t = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        except Exception:
+            return False
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=datetime.timezone.utc)
+    else:
+        return False
+    return t <= now
+
+def cached_windows():
+    """Last-seen rate windows, with any window whose reset passed shown as 0%."""
+    out = []
+    for row in load_cache().get("rate_limits") or []:
+        if not (isinstance(row, list) and len(row) == 3):
+            continue
+        label, pct, resets = row
+        if expired(resets):
+            out.append((label, 0.0, None))
+        else:
+            out.append((label, pct, resets))
+    return out
+
 def rate_windows(rl):
     """Normalize rate_limits into [(label, pct, resets_at), ...]."""
     out = []
@@ -206,7 +293,10 @@ def main():
     if used is None:
         used = transcript_tokens(data.get("transcript_path"))
     if not limit:
-        limit = int(os.environ.get("STATUSLINE_CONTEXT_LIMIT", "200000"))
+        # the payload omits the window size on the transcript-fallback path, so
+        # prefer the size Claude last reported over a hardcoded guess.
+        limit = load_cache().get("context_limit") or int(
+            os.environ.get("STATUSLINE_CONTEXT_LIMIT", "200000"))
         if used and used > limit:
             limit = 1_000_000 if used <= 1_000_000 else used
     if used and limit:
@@ -217,11 +307,20 @@ def main():
         icon = "📊" if pct < 60 else ("🟠" if pct < 85 else "🔴")
         tail = f" ({human(used)}/{human(limit)})" if used else ""
         parts.append(f"{icon} {pct:.0f}%{tail}")
+        if used:
+            save_cache(context_limit=limit)
     else:
-        parts.append("📊 --%")
+        # a brand-new session: nothing has been sent yet, so 0% is the truth.
+        # the window size is only known from a previous session's payload.
+        limit = load_cache().get("context_limit") or limit
+        parts.append(f"📊 0% (0/{human(limit)})")
 
     # 💳 /usage rate limits
     wins = rate_windows(data.get("rate_limits"))
+    if wins:
+        save_cache(rate_limits=[[l, p, r] for l, p, r in wins])
+    else:
+        wins = cached_windows()
     if wins:
         bits = []
         for label, p, resets in wins:
