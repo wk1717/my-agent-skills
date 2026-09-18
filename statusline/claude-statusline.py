@@ -76,17 +76,41 @@ def transcript_tokens(path):
                         continue
                     if not isinstance(rec, dict) or rec.get("isSidechain"):
                         continue
-                    u = dig(rec, "message", "usage")
-                    if not isinstance(u, dict):
-                        continue
-                    total = (u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
-                             + u.get("cache_read_input_tokens", 0) + u.get("output_tokens", 0))
+                    if rec.get("subtype") == "compact_boundary":
+                        # nothing sent since /compact, and older usage is the
+                        # pre-compact context. estimate the new one as fixed
+                        # overhead (system prompt + tools, i.e. the session's
+                        # first request) plus the summary Claude kept.
+                        post = dig(rec, "compactMetadata", "postTokens")
+                        base = first_usage(path)
+                        return (base + post) if base and post else None
+                    total = usage_total(rec)
                     if total:
                         return total
                 if read >= size:
                     break
     except Exception:
         return None
+    return None
+
+def usage_total(rec):
+    u = dig(rec, "message", "usage")
+    if not isinstance(u, dict):
+        return 0
+    return (u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+            + u.get("cache_read_input_tokens", 0) + u.get("output_tokens", 0))
+
+def first_usage(path):
+    # ponytail: includes the first prompt too, so a huge opening paste inflates
+    # the post-compact estimate until the next reply replaces it.
+    with open(path, "rb") as f:
+        for raw in f:
+            try:
+                rec = json.loads(raw)
+            except Exception:
+                continue
+            if isinstance(rec, dict) and not rec.get("isSidechain") and usage_total(rec):
+                return usage_total(rec)
     return None
 
 def first_num(d, *keys):
