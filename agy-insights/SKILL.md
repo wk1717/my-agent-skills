@@ -24,7 +24,7 @@ Trigger this skill whenever the user:
 Run the bundled Python script to parse session logs, compute statistics, render the self-contained HTML report, and open it in the default browser:
 
 ```bash
-python3 /Users/smk/projects/my-agent-skills/insights/scripts/generate_insights.py --source antigravity
+python3 /Users/smk/projects/my-agent-skills/agy-insights/scripts/generate_insights.py --source antigravity
 ```
 
 #### Optional CLI Options
