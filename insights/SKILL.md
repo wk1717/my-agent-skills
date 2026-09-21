@@ -1,17 +1,19 @@
 ---
-name: insights
-description: Generate an interactive visual Session Insights Report and analytics dashboard from Antigravity and Claude Code conversation logs and git history. Use this skill whenever the user types /insights, asks for a session report (세션 보고서), activity analysis (활동 분석), usage statistics (대화 통계/사용량), developer insights (인사이트 리포트), or wants to identify repetitive workflows to turn into custom skills, hooks, or subagents.
+name: agy-insights
+description: Antigravity 세션 로그와 git 히스토리로 인터랙티브 HTML 세션 인사이트 대시보드를 만든다. 사용자가 /agy-insights를 치거나 "Antigravity 세션 보고서", "AG 활동 분석", "안티그래비티 대화 통계"를 요청할 때, 또는 Antigravity 작업에서 반복되는 워크플로를 찾아 커스텀 스킬·훅·서브에이전트로 만들려 할 때 쓴다. Claude Code 세션 분석은 내장 /insights가 맡으므로 이 스킬을 쓰지 않는다.
 ---
 
-# Session Insights Skill (/insights)
+# Session Insights Skill (/agy-insights)
 
-Analyze AI coding agent sessions (Antigravity transcripts, Claude Code logs, and Git repository history) to produce an interactive, comprehensive HTML Session Insights Dashboard modeled after Anthropic's Claude Code Insights report.
+Antigravity 트랜스크립트와 git 히스토리를 분석해 인터랙티브 HTML 세션 인사이트 대시보드를 만든다. Anthropic의 Claude Code Insights 보고서 형식을 본떴다.
+
+**Claude Code 세션은 이 스킬이 다루지 않는다.** Claude Code에는 내장 `/insights`가 있고 보고서가 `~/.claude/usage-data/report.html`에 저장된다. Claude Code 세션 분석을 요청받으면 내장 `/insights`를, 토큰·비용은 `/usage`를 안내한다. 이 스킬은 Antigravity 전용이다(스크립트에 `--source claude`가 남아 있지만 기본값은 Antigravity다).
 
 ## When to Use
 
 Trigger this skill whenever the user:
-- Types `/insights` or `/session-report`
-- Asks for "세션 보고서", "인사이트 보고서", "활동 분석", "대화 통계", "세션 요약 리포트"
+- Types `/agy-insights`
+- Asks for "Antigravity 세션 보고서", "AG 활동 분석", "안티그래비티 대화 통계"
 - Asks to identify repetitive commands/workflows and convert them into reusable custom skills (`skill-creator`), hooks, or subagents.
 - Asks for productivity tips, friction analysis, or AGENTS.md rule recommendations based on past sessions.
 
@@ -22,7 +24,7 @@ Trigger this skill whenever the user:
 Run the bundled Python script to parse session logs, compute statistics, render the self-contained HTML report, and open it in the default browser:
 
 ```bash
-python3 /Users/smk/projects/my-agent-skills/insights/scripts/generate_insights.py
+python3 /Users/smk/projects/my-agent-skills/insights/scripts/generate_insights.py --source antigravity
 ```
 
 #### Optional CLI Options

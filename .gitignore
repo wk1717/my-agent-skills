@@ -1,3 +1,5 @@
 # Ignore local private skills directory
 PTC/
 .DS_Store
+__pycache__/
+*.pyc
